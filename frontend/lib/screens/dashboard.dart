@@ -213,11 +213,16 @@ class _CarInsightCard extends StatelessWidget {
       'ready': Colors.teal, 'for_sale': Colors.purple, 'sold': Colors.green,
     }[ci.status] ?? Colors.grey;
 
+    final isProfit = (ci.profit ?? 0) >= 0;
+    final profitColor = isProfit ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+          // ── Header ──
           Row(children: [
             Expanded(child: Text(ci.carName,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
@@ -230,28 +235,92 @@ class _CarInsightCard extends StatelessWidget {
                   style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ]),
+          const SizedBox(height: 12),
+
+          // ── P&L summary ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(children: [
+              _plCol('Total Cost', fmtMoney(ci.totalCost), Colors.grey.shade700),
+              if (ci.salePrice != null) ...[
+                _divider(),
+                _plCol('Sale Price', fmtMoney(ci.salePrice!), Colors.blue),
+                _divider(),
+                _plCol(isProfit ? 'Profit' : 'Loss',
+                    fmtMoney(ci.profit!.abs()), profitColor, bold: true),
+              ] else ...[
+                _divider(),
+                _plCol('Status', kStatusLabels[ci.status] ?? ci.status, statusColor),
+              ],
+            ]),
+          ),
+
+          // ── Who owes whom (per car) ──
+          if (ci.settlements.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text('Who Owes Whom',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade700)),
+            const SizedBox(height: 6),
+            ...ci.settlements.map((s) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(children: [
+                const Icon(Icons.arrow_forward, size: 14, color: Colors.orange),
+                const SizedBox(width: 6),
+                Expanded(child: RichText(text: TextSpan(
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  children: [
+                    TextSpan(text: s.from, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                    const TextSpan(text: ' owes '),
+                    TextSpan(text: s.to, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                  ],
+                ))),
+                Text(fmtMoney(s.amount),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 13)),
+              ]),
+            )),
+          ],
+
+          // ── Partner breakdown table ──
           if (ci.breakdown.isNotEmpty) ...[
             const SizedBox(height: 12),
+            Text('Partner Breakdown',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade700)),
+            const SizedBox(height: 6),
             Table(
-              columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(1.5), 2: FlexColumnWidth(1.5), 3: FlexColumnWidth(1.5)},
+              columnWidths: const {
+                0: FlexColumnWidth(2),
+                1: FlexColumnWidth(1.5),
+                2: FlexColumnWidth(1.5),
+                3: FlexColumnWidth(1.5),
+              },
               children: [
                 TableRow(
-                  decoration: BoxDecoration(color: Colors.grey[100]),
-                  children: ['Partner', 'Paid', 'Should Pay', 'Balance']
+                  decoration: BoxDecoration(color: Colors.grey.shade100),
+                  children: ['Partner', 'Paid In', 'Should Pay', 'Balance']
                       .map((h) => Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            child: Text(h, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                            child: Text(h, style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey)),
                           ))
                       .toList(),
                 ),
                 ...ci.breakdown.map((p) {
                   final netColor = p.net >= 0 ? Colors.green : Colors.red;
-                  return TableRow(children: [
-                    _cell(p.partner, bold: true),
-                    _cell(fmtMoney(p.paid), color: Colors.blue),
-                    _cell(fmtMoney(p.owed), color: Colors.grey),
-                    _cell('${p.net >= 0 ? '+' : ''}${fmtMoney(p.net)}', color: netColor, bold: true),
-                  ]);
+                  return TableRow(
+                    decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
+                    children: [
+                      _cell(p.partner, bold: true),
+                      _cell(fmtMoney(p.paid), color: Colors.blue),
+                      _cell(fmtMoney(p.owed), color: Colors.grey),
+                      _cell('${p.net >= 0 ? '+' : ''}${fmtMoney(p.net)}', color: netColor, bold: true),
+                    ],
+                  );
                 }),
               ],
             ),
@@ -261,11 +330,24 @@ class _CarInsightCard extends StatelessWidget {
     );
   }
 
+  Widget _plCol(String label, String value, Color color, {bool bold = false}) {
+    return Expanded(child: Column(children: [
+      Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+      const SizedBox(height: 3),
+      Text(value, style: TextStyle(
+          fontSize: 13, fontWeight: bold ? FontWeight.bold : FontWeight.w600, color: color)),
+    ]));
+  }
+
+  Widget _divider() => Container(width: 1, height: 30, color: Colors.grey.shade300,
+      margin: const EdgeInsets.symmetric(horizontal: 8));
+
   Widget _cell(String text, {Color? color, bool bold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Text(text,
-          style: TextStyle(color: color, fontWeight: bold ? FontWeight.bold : FontWeight.normal, fontSize: 13)),
+          style: TextStyle(color: color,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal, fontSize: 13)),
     );
   }
 }

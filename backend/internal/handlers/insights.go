@@ -76,8 +76,26 @@ func Insights(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 
+		// Per-car settlements
+		var carBalances []models.PartnerBalance
+		for name := range names {
+			p := carPaid[name]
+			o := carOwed[name]
+			carBalances = append(carBalances, models.PartnerBalance{Partner: name, TotalPaid: p, TotalOwed: o, Net: p - o})
+		}
+		carSettlements := computeSettlements(carBalances)
+
+		// P&L
+		var profit *float64
+		if c.SalePrice != nil {
+			p := *c.SalePrice - totalCost
+			profit = &p
+		}
+
 		carInsights = append(carInsights, models.CarInsight{
-			CarID: c.ID, CarName: c.DisplayName(), Status: c.Status, Breakdown: breakdown,
+			CarID: c.ID, CarName: c.DisplayName(), Status: c.Status,
+			TotalCost: totalCost, SalePrice: c.SalePrice, Profit: profit,
+			Breakdown: breakdown, Settlements: carSettlements,
 		})
 	}
 

@@ -84,10 +84,14 @@ type Settlement struct {
 }
 
 type CarInsight struct {
-	CarID    int64              `json:"car_id"`
-	CarName  string             `json:"car_name"`
-	Status   string             `json:"status"`
-	Breakdown []PartnerCarShare `json:"breakdown"`
+	CarID       int64             `json:"car_id"`
+	CarName     string            `json:"car_name"`
+	Status      string            `json:"status"`
+	TotalCost   float64           `json:"total_cost"`
+	SalePrice   *float64          `json:"sale_price"`
+	Profit      *float64          `json:"profit"`
+	Breakdown   []PartnerCarShare `json:"breakdown"`
+	Settlements []Settlement      `json:"settlements"`
 }
 
 type PartnerCarShare struct {

@@ -337,15 +337,32 @@ class CarInsight {
   final int carId;
   final String carName;
   final String status;
+  final double totalCost;
+  final double? salePrice;
+  final double? profit;
   final List<PartnerCarShare> breakdown;
+  final List<Settlement> settlements;
 
-  CarInsight({required this.carId, required this.carName, required this.status, required this.breakdown});
+  CarInsight({
+    required this.carId,
+    required this.carName,
+    required this.status,
+    this.totalCost = 0,
+    this.salePrice,
+    this.profit,
+    required this.breakdown,
+    this.settlements = const [],
+  });
 
   factory CarInsight.fromJson(Map<String, dynamic> j) => CarInsight(
         carId: j['car_id'] ?? 0,
         carName: j['car_name'] ?? '',
         status: j['status'] ?? '',
+        totalCost: (j['total_cost'] ?? 0).toDouble(),
+        salePrice: j['sale_price']?.toDouble(),
+        profit: j['profit']?.toDouble(),
         breakdown: (j['breakdown'] as List? ?? []).map((e) => PartnerCarShare.fromJson(e)).toList(),
+        settlements: (j['settlements'] as List? ?? []).map((e) => Settlement.fromJson(e)).toList(),
       );
 }
 
