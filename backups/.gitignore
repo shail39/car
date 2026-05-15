@@ -1,0 +1,2 @@
+# Keep SQL backups tracked
+!*.sql
