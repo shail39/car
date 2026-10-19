@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'models.dart';
 
@@ -127,4 +128,14 @@ class Api {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payments.map((p) => p.toJson()).toList()));
   }
+
+  static Future<ReceiptScanResult> scanReceipt(int carId, Uint8List bytes, String filename) async {
+    final req = http.MultipartRequest('POST', Uri.parse('$_base/cars/$carId/receipts/scan'))
+      ..files.add(http.MultipartFile.fromBytes('image', bytes, filename: filename));
+    final r = await http.Response.fromStream(await req.send());
+    if (r.statusCode >= 400) throw Exception('Scan failed: ${r.body}');
+    return ReceiptScanResult.fromJson(jsonDecode(r.body), carId);
+  }
+
+  static String receiptImageUrl(int receiptId) => '$_base/receipts/$receiptId/image';
 }

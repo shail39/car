@@ -142,6 +142,7 @@ class Expense {
   final String partNumber;
   final double quantity;
   final double unitPrice;
+  final int? receiptId;
 
   Expense({
     this.id,
@@ -154,6 +155,7 @@ class Expense {
     this.partNumber = '',
     this.quantity = 1,
     this.unitPrice = 0,
+    this.receiptId,
   });
 
   factory Expense.fromJson(Map<String, dynamic> j) => Expense(
@@ -167,6 +169,7 @@ class Expense {
         partNumber: j['part_number'] ?? '',
         quantity: (j['quantity'] ?? 1).toDouble(),
         unitPrice: (j['unit_price'] ?? 0).toDouble(),
+        receiptId: j['receipt_id'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -178,7 +181,65 @@ class Expense {
         'part_number': partNumber,
         'quantity': quantity,
         'unit_price': unitPrice,
+        'receipt_id': receiptId,
       };
+
+  Expense copyWith({
+    int? carId,
+    String? category,
+    String? description,
+    double? amount,
+    String? paidBy,
+    String? expenseDate,
+    String? partNumber,
+    double? quantity,
+    double? unitPrice,
+    int? receiptId,
+  }) =>
+      Expense(
+        id: id,
+        carId: carId ?? this.carId,
+        category: category ?? this.category,
+        description: description ?? this.description,
+        amount: amount ?? this.amount,
+        paidBy: paidBy ?? this.paidBy,
+        expenseDate: expenseDate ?? this.expenseDate,
+        partNumber: partNumber ?? this.partNumber,
+        quantity: quantity ?? this.quantity,
+        unitPrice: unitPrice ?? this.unitPrice,
+        receiptId: receiptId ?? this.receiptId,
+      );
+}
+
+class ReceiptScanResult {
+  final int receiptId;
+  final String vendor;
+  final String receiptDate;
+  final List<Expense> items;
+
+  ReceiptScanResult({
+    required this.receiptId,
+    required this.vendor,
+    required this.receiptDate,
+    required this.items,
+  });
+
+  factory ReceiptScanResult.fromJson(Map<String, dynamic> j, int carId) {
+    final receiptId = j['receipt_id'] ?? 0;
+    final receiptDate = j['receipt_date'] ?? '';
+    return ReceiptScanResult(
+      receiptId: receiptId,
+      vendor: j['vendor'] ?? '',
+      receiptDate: receiptDate,
+      items: (j['items'] as List? ?? [])
+          .map((e) => Expense.fromJson(e).copyWith(
+                carId: carId,
+                receiptId: receiptId,
+                expenseDate: receiptDate,
+              ))
+          .toList(),
+    );
+  }
 }
 
 class CarPayment {

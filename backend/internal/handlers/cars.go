@@ -151,14 +151,14 @@ func carExpenses(carID int64) []models.Expense {
 	rows, _ := db.DB.Query(`
 		SELECT id, car_id, category, COALESCE(description,''), amount,
 		       COALESCE(paid_by,''), COALESCE(expense_date,''), COALESCE(part_number,''),
-		       quantity, unit_price, COALESCE(created_at::text,'')
+		       quantity, unit_price, receipt_id, COALESCE(created_at::text,'')
 		FROM expenses WHERE car_id=$1 ORDER BY id DESC`, carID)
 	defer rows.Close()
 	var out []models.Expense
 	for rows.Next() {
 		e := models.Expense{}
 		rows.Scan(&e.ID, &e.CarID, &e.Category, &e.Description, &e.Amount,
-			&e.PaidBy, &e.ExpenseDate, &e.PartNumber, &e.Quantity, &e.UnitPrice, &e.CreatedAt)
+			&e.PaidBy, &e.ExpenseDate, &e.PartNumber, &e.Quantity, &e.UnitPrice, &e.ReceiptID, &e.CreatedAt)
 		out = append(out, e)
 	}
 	return out

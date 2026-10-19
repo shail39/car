@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -60,52 +58,15 @@ Respond with ONLY a JSON object — no markdown, no code fences, no explanation.
 		c.PurchasePrice, c.AuctionFees, c.TransportCost,
 		expSummary, c.TotalCost, c.Status, c.Notes)
 
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
-	if apiKey == "" {
-		http.Error(w, `{"error":"ANTHROPIC_API_KEY not configured"}`, 500)
-		return
+	content := []map[string]interface{}{
+		{"type": "text", "text": prompt},
 	}
-
-	reqBody, _ := json.Marshal(map[string]interface{}{
-		"model":      "claude-haiku-4-5-20251001",
-		"max_tokens": 1024,
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
-		},
-	})
-
-	req, _ := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewReader(reqBody))
-	req.Header.Set("x-api-key", apiKey)
-	req.Header.Set("anthropic-version", "2023-06-01")
-	req.Header.Set("content-type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
+	text, err := callClaude(content, 1024)
 	if err != nil {
-		http.Error(w, `{"error":"failed to reach Anthropic API"}`, 502)
-		return
-	}
-	defer resp.Body.Close()
-
-	var claudeResp struct {
-		Content []struct {
-			Text string `json:"text"`
-		} `json:"content"`
-		Error *struct {
-			Message string `json:"message"`
-		} `json:"error"`
-	}
-	json.NewDecoder(resp.Body).Decode(&claudeResp)
-
-	if claudeResp.Error != nil {
-		http.Error(w, fmt.Sprintf(`{"error":%q}`, claudeResp.Error.Message), 502)
-		return
-	}
-	if len(claudeResp.Content) == 0 {
-		http.Error(w, `{"error":"empty response from Claude"}`, 500)
+		http.Error(w, fmt.Sprintf(`{"error":%q}`, err.Error()), 502)
 		return
 	}
 
-	text := strings.TrimSpace(claudeResp.Content[0].Text)
 	var result models.AnalysisResult
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"parse failed: %s","raw":%q}`, err, text), 500)

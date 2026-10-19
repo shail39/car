@@ -58,7 +58,34 @@ type Expense struct {
 	PartNumber  string  `json:"part_number"`
 	Quantity    float64 `json:"quantity"`
 	UnitPrice   float64 `json:"unit_price"`
+	ReceiptID   *int64  `json:"receipt_id"`
 	CreatedAt   string  `json:"created_at"`
+}
+
+type Receipt struct {
+	ID          int64  `json:"id"`
+	CarID       int64  `json:"car_id"`
+	MimeType    string `json:"mime_type"`
+	Vendor      string `json:"vendor"`
+	ReceiptDate string `json:"receipt_date"`
+	CreatedAt   string `json:"created_at"`
+}
+
+type ReceiptItem struct {
+	Category    string  `json:"category"`
+	Description string  `json:"description"`
+	PartNumber  string  `json:"part_number"`
+	Quantity    float64 `json:"quantity"`
+	UnitPrice   float64 `json:"unit_price"`
+	Amount      float64 `json:"amount"`
+}
+
+type ReceiptScanResult struct {
+	ReceiptID   int64         `json:"receipt_id"`
+	Vendor      string        `json:"vendor"`
+	ReceiptDate string        `json:"receipt_date"`
+	Tax         float64       `json:"tax"`
+	Items       []ReceiptItem `json:"items"`
 }
 
 type CarPayment struct {

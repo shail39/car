@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../api.dart';
 import '../models.dart';
 import '../utils.dart';
 import '../widgets/payment_split.dart';
+import '../widgets/receipt_review_dialog.dart';
 import 'car_form.dart';
 
 
@@ -77,12 +79,47 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
           if (expense == null) {
             await Api.createExpense(widget.carId, e2);
           } else {
-            await Api.updateExpense(widget.carId, expense.id!, e2);
+            // Preserve the receipt link — the dialog has no UI for it, so it
+            // would otherwise be dropped on every edit.
+            await Api.updateExpense(widget.carId, expense.id!, e2.copyWith(receiptId: expense.receiptId));
           }
           _load();
         },
       ),
     );
+  }
+
+  Future<void> _scanReceipt() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 85);
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      final result = await Api.scanReceipt(widget.carId, bytes, picked.name);
+      if (mounted) Navigator.pop(context); // close loading indicator
+      if (!mounted) return;
+      final partnerNames = _car!.partners.map((cp) => cp.partner?.name ?? '').where((n) => n.isNotEmpty).toList();
+      await showDialog(
+        context: context,
+        builder: (_) => ReceiptReviewDialog(
+          result: result,
+          imageBytes: bytes,
+          carId: widget.carId,
+          partnerNames: partnerNames,
+          onDone: _load,
+        ),
+      );
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // close loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Scan failed: $e')));
+      }
+    }
   }
 
   Future<void> _deleteExpense(Expense e) async {
@@ -200,7 +237,15 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
 
         final expenseCol = _SectionCard(
           title: 'Repair & Expenses',
-          action: FilledButton.icon(onPressed: _addExpense, icon: const Icon(Icons.add), label: const Text('Add Expense')),
+          action: Row(mainAxisSize: MainAxisSize.min, children: [
+            OutlinedButton.icon(
+              onPressed: _scanReceipt,
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: const Text('Scan Receipt'),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.icon(onPressed: _addExpense, icon: const Icon(Icons.add), label: const Text('Add Expense')),
+          ]),
           child: car.expenses.isEmpty
               ? const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('No expenses yet', style: TextStyle(color: Colors.grey))))
               : _ExpenseTable(car.expenses, onEdit: _editExpense, onDelete: _deleteExpense),
@@ -249,19 +294,50 @@ class _ExpenseTable extends StatelessWidget {
           leading: CircleAvatar(radius: 18, child: Text(e.category[0], style: const TextStyle(fontSize: 12))),
           title: Row(children: [
             Text(e.category, style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (e.description.isNotEmpty) Text(' — ${e.description}', style: const TextStyle(color: Colors.grey)),
+            if (e.description.isNotEmpty)
+              Flexible(
+                child: Text(' — ${e.description}',
+                    style: const TextStyle(color: Colors.grey), overflow: TextOverflow.ellipsis),
+              ),
           ]),
-          subtitle: Text([
-            e.expenseDate.isNotEmpty ? e.expenseDate : '—',
-            'Paid by: ${e.paidBy.isNotEmpty ? e.paidBy : '—'}',
-            if (e.partNumber.isNotEmpty) 'Part#: ${e.partNumber}',
-            if (e.quantity > 1) '${e.quantity.toStringAsFixed(e.quantity == e.quantity.roundToDouble() ? 0 : 1)}× @ ${fmtMoney(e.unitPrice)}',
-          ].join(' · ')),
+          subtitle: Text(
+            [
+              e.expenseDate.isNotEmpty ? e.expenseDate : '—',
+              'Paid by: ${e.paidBy.isNotEmpty ? e.paidBy : '—'}',
+              if (e.partNumber.isNotEmpty) 'Part#: ${e.partNumber}',
+              if (e.quantity > 1) '${e.quantity.toStringAsFixed(e.quantity == e.quantity.roundToDouble() ? 0 : 1)}× @ ${fmtMoney(e.unitPrice)}',
+            ].join(' · '),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             Text(fmtMoney(e.amount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(width: 8),
-            IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => onEdit(e)),
-            IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => onDelete(e)),
+            const SizedBox(width: 4),
+            if (e.receiptId != null)
+              IconButton(
+                icon: const Icon(Icons.receipt_long, size: 20, color: Colors.blueGrey),
+                tooltip: 'View receipt',
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (_) => Dialog(
+                    child: InteractiveViewer(child: Image.network(Api.receiptImageUrl(e.receiptId!))),
+                  ),
+                ),
+              ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              onPressed: () => onEdit(e),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              onPressed: () => onDelete(e),
+            ),
           ]),
         ),
       )),
@@ -281,10 +357,16 @@ class _SectionCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
-            if (action != null) action!,
-          ]),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              if (action != null) action!,
+            ],
+          ),
           const SizedBox(height: 16),
           child,
         ]),

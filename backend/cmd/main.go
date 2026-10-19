@@ -47,6 +47,8 @@ func main() {
 	api.HandleFunc("/cars/{id:[0-9]+}/payments/{pid:[0-9]+}", handlers.DeletePayment).Methods("DELETE")
 	api.HandleFunc("/cars/{id:[0-9]+}/payments/bulk/{type}", handlers.BulkSetPayments).Methods("POST")
 	api.HandleFunc("/cars/{id:[0-9]+}/analyze", handlers.AnalyzeCar).Methods("POST")
+	api.HandleFunc("/cars/{id:[0-9]+}/receipts/scan", handlers.ScanReceipt).Methods("POST")
+	api.HandleFunc("/receipts/{id:[0-9]+}/image", handlers.GetReceiptImage).Methods("GET")
 
 	api.HandleFunc("/partners", handlers.ListPartners).Methods("GET")
 	api.HandleFunc("/partners", handlers.CreatePartner).Methods("POST")

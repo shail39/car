@@ -82,6 +82,18 @@ func migrate() {
 		amount NUMERIC NOT NULL DEFAULT 0,
 		notes TEXT DEFAULT ''
 	);
+
+	CREATE TABLE IF NOT EXISTS receipts (
+		id BIGSERIAL PRIMARY KEY,
+		car_id BIGINT NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
+		image_data BYTEA NOT NULL,
+		mime_type TEXT NOT NULL DEFAULT 'image/jpeg',
+		vendor TEXT DEFAULT '',
+		receipt_date TEXT DEFAULT '',
+		created_at TIMESTAMPTZ DEFAULT NOW()
+	);
+
+	ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_id BIGINT REFERENCES receipts(id) ON DELETE SET NULL;
 	`)
 	if err != nil {
 		log.Fatal("migrate:", err)
