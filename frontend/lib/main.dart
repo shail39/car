@@ -3,6 +3,7 @@ import 'screens/dashboard.dart';
 import 'screens/cars_list.dart';
 import 'screens/partners.dart';
 import 'screens/market_analyzer.dart';
+import 'screens/other_expenses.dart';
 
 void main() {
   runApp(const CarManagerApp());
@@ -45,6 +46,7 @@ class _MainShellState extends State<MainShell> {
   static const _screens = [
     DashboardScreen(),
     CarsListScreen(),
+    OtherExpensesScreen(),
     PartnersScreen(),
     MarketAnalyzerScreen(),
   ];
@@ -52,6 +54,7 @@ class _MainShellState extends State<MainShell> {
   static const _destinations = [
     (icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'Dashboard'),
     (icon: Icons.directions_car_outlined, activeIcon: Icons.directions_car, label: 'Cars'),
+    (icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'Overhead'),
     (icon: Icons.people_outline, activeIcon: Icons.people, label: 'Partners'),
     (icon: Icons.insights_outlined, activeIcon: Icons.insights, label: 'Analyzer'),
   ];

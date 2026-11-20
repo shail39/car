@@ -21,6 +21,7 @@ type Car struct {
 	MarketPrice   *float64     `json:"market_price"`
 
 	TotalExpenses float64      `json:"total_expenses"`
+	OverheadShare float64      `json:"overhead_share"` // equal share of account-level other expenses (active cars only)
 	TotalCost     float64      `json:"total_cost"`
 	Profit        *float64     `json:"profit"`
 	Partners      []CarPartner `json:"partners"`
@@ -59,6 +60,18 @@ type Expense struct {
 	Quantity    float64 `json:"quantity"`
 	UnitPrice   float64 `json:"unit_price"`
 	ReceiptID   *int64  `json:"receipt_id"`
+	CreatedAt   string  `json:"created_at"`
+}
+
+// OtherExpense is an account-level overhead expense (rent, consumables,
+// utilities, etc.) that is not tied to any specific car.
+type OtherExpense struct {
+	ID          int64   `json:"id"`
+	Category    string  `json:"category"`
+	Description string  `json:"description"`
+	Amount      float64 `json:"amount"`
+	PaidBy      string  `json:"paid_by"`
+	ExpenseDate string  `json:"expense_date"`
 	CreatedAt   string  `json:"created_at"`
 }
 

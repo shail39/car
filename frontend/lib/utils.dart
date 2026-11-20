@@ -24,5 +24,5 @@ const kStatusLabels = {
 const kCategories = [
   'Engine', 'Transmission', 'Brakes', 'Suspension', 'Electrical',
   'Body/Paint', 'Tires', 'Interior', 'AC/Heat', 'Transport',
-  'Storage', 'Inspection', 'Other'
+  'Storage', 'Inspection', 'Rent', 'Consumables', 'Other'
 ];

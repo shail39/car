@@ -62,6 +62,29 @@ class Api {
     await http.delete(Uri.parse('$_base/partners/$id'));
   }
 
+  static Future<List<OtherExpense>> getOtherExpenses() async {
+    final r = await http.get(Uri.parse('$_base/other-expenses'));
+    final list = jsonDecode(r.body) as List? ?? [];
+    return list.map((e) => OtherExpense.fromJson(e)).toList();
+  }
+
+  static Future<OtherExpense> createOtherExpense(OtherExpense e) async {
+    final r = await http.post(Uri.parse('$_base/other-expenses'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(e.toJson()));
+    return OtherExpense.fromJson(jsonDecode(r.body));
+  }
+
+  static Future<void> updateOtherExpense(int id, OtherExpense e) async {
+    await http.put(Uri.parse('$_base/other-expenses/$id'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(e.toJson()));
+  }
+
+  static Future<void> deleteOtherExpense(int id) async {
+    await http.delete(Uri.parse('$_base/other-expenses/$id'));
+  }
+
   static Future<void> addCarPartner(int carId, CarPartner cp) async {
     await http.post(Uri.parse('$_base/cars/$carId/partners'),
         headers: {'Content-Type': 'application/json'},

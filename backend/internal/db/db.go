@@ -94,6 +94,16 @@ func migrate() {
 	);
 
 	ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_id BIGINT REFERENCES receipts(id) ON DELETE SET NULL;
+
+	CREATE TABLE IF NOT EXISTS other_expenses (
+		id BIGSERIAL PRIMARY KEY,
+		category TEXT NOT NULL,
+		description TEXT DEFAULT '',
+		amount NUMERIC NOT NULL DEFAULT 0,
+		paid_by TEXT DEFAULT '',
+		expense_date TEXT DEFAULT '',
+		created_at TIMESTAMPTZ DEFAULT NOW()
+	);
 	`)
 	if err != nil {
 		log.Fatal("migrate:", err)

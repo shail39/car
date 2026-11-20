@@ -50,6 +50,11 @@ func main() {
 	api.HandleFunc("/cars/{id:[0-9]+}/receipts/scan", handlers.ScanReceipt).Methods("POST")
 	api.HandleFunc("/receipts/{id:[0-9]+}/image", handlers.GetReceiptImage).Methods("GET")
 
+	api.HandleFunc("/other-expenses", handlers.ListOtherExpenses).Methods("GET")
+	api.HandleFunc("/other-expenses", handlers.CreateOtherExpense).Methods("POST")
+	api.HandleFunc("/other-expenses/{id:[0-9]+}", handlers.UpdateOtherExpense).Methods("PUT")
+	api.HandleFunc("/other-expenses/{id:[0-9]+}", handlers.DeleteOtherExpense).Methods("DELETE")
+
 	api.HandleFunc("/partners", handlers.ListPartners).Methods("GET")
 	api.HandleFunc("/partners", handlers.CreatePartner).Methods("POST")
 	api.HandleFunc("/partners/{id:[0-9]+}", handlers.UpdatePartner).Methods("PUT")

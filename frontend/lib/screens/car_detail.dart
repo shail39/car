@@ -194,6 +194,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
             _InfoRow('Auction Fees', fmtMoney(car.auctionFees)),
             _InfoRow('Transport', fmtMoney(car.transportCost)),
             _InfoRow('Repairs', fmtMoney(car.totalExpenses)),
+            if (car.overheadShare > 0) _InfoRow('Overhead Share', fmtMoney(car.overheadShare)),
             const Divider(),
             _InfoRow('Total Cost', fmtMoney(car.totalCost), bold: true),
             if (car.salePrice != null) _InfoRow('Sale Price', fmtMoney(car.salePrice!), bold: true),

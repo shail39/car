@@ -15,6 +15,7 @@ class Car {
   final double? salePrice;
   final String notes;
   final double totalExpenses;
+  final double overheadShare;
   final double totalCost;
   final double? profit;
   final double? marketPrice;
@@ -39,6 +40,7 @@ class Car {
     this.salePrice,
     this.notes = '',
     this.totalExpenses = 0,
+    this.overheadShare = 0,
     this.totalCost = 0,
     this.profit,
     this.marketPrice,
@@ -64,6 +66,7 @@ class Car {
         salePrice: j['sale_price']?.toDouble(),
         notes: j['notes'] ?? '',
         totalExpenses: (j['total_expenses'] ?? 0).toDouble(),
+        overheadShare: (j['overhead_share'] ?? 0).toDouble(),
         totalCost: (j['total_cost'] ?? 0).toDouble(),
         profit: j['profit']?.toDouble(),
         marketPrice: j['market_price']?.toDouble(),
@@ -91,6 +94,42 @@ class Car {
       };
 
   String get displayName => '$year $make $model';
+}
+
+/// An account-level overhead expense (rent, consumables, etc.), not tied to a car.
+class OtherExpense {
+  final int? id;
+  final String category;
+  final String description;
+  final double amount;
+  final String paidBy;
+  final String expenseDate;
+
+  OtherExpense({
+    this.id,
+    required this.category,
+    this.description = '',
+    required this.amount,
+    this.paidBy = '',
+    this.expenseDate = '',
+  });
+
+  factory OtherExpense.fromJson(Map<String, dynamic> j) => OtherExpense(
+        id: j['id'],
+        category: j['category'] ?? '',
+        description: j['description'] ?? '',
+        amount: (j['amount'] ?? 0).toDouble(),
+        paidBy: j['paid_by'] ?? '',
+        expenseDate: j['expense_date'] ?? '',
+      );
+
+  Map<String, dynamic> toJson() => {
+        'category': category,
+        'description': description,
+        'amount': amount,
+        'paid_by': paidBy,
+        'expense_date': expenseDate,
+      };
 }
 
 class Partner {

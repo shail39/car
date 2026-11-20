@@ -36,7 +36,7 @@ import (
 
 const (
 	claudeModel       = "claude-haiku-4-5-20251001"
-	receiptCategories = "Engine, Transmission, Brakes, Suspension, Electrical, Body/Paint, Tires, Interior, AC/Heat, Transport, Storage, Inspection, Other"
+	receiptCategories = "Engine, Transmission, Brakes, Suspension, Electrical, Body/Paint, Tires, Interior, AC/Heat, Transport, Storage, Inspection, Rent, Consumables, Other"
 )
 
 func round2(v float64) float64 { return math.Round(v*100) / 100 }

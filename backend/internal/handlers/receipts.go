@@ -18,7 +18,7 @@ import (
 const maxReceiptUploadBytes = 8 << 20 // 8MB
 
 // receiptCategories must be kept in sync with kCategories in frontend/lib/utils.dart.
-const receiptCategories = "Engine, Transmission, Brakes, Suspension, Electrical, Body/Paint, Tires, Interior, AC/Heat, Transport, Storage, Inspection, Other"
+const receiptCategories = "Engine, Transmission, Brakes, Suspension, Electrical, Body/Paint, Tires, Interior, AC/Heat, Transport, Storage, Inspection, Rent, Consumables, Other"
 
 func ScanReceipt(w http.ResponseWriter, r *http.Request) {
 	carID, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)

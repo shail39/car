@@ -25,6 +25,7 @@ func ListCars(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
+	overhead := overheadSharePerActiveCar()
 	cars := []models.Car{}
 	for rows.Next() {
 		c := models.Car{}
@@ -33,7 +34,10 @@ func ListCars(w http.ResponseWriter, r *http.Request) {
 			&c.PaidByPurchase, &c.PaidByTransport,
 			&c.Status, &c.SalePrice, &c.Notes, &c.CreatedAt, &c.MarketPrice)
 		c.TotalExpenses = totalExpenses(c.ID)
-		c.TotalCost = c.PurchasePrice + c.AuctionFees + c.TransportCost + c.TotalExpenses
+		if c.Status != "sold" {
+			c.OverheadShare = overhead
+		}
+		c.TotalCost = c.PurchasePrice + c.AuctionFees + c.TransportCost + c.TotalExpenses + c.OverheadShare
 		if c.SalePrice != nil {
 			p := *c.SalePrice - c.TotalCost
 			c.Profit = &p
@@ -62,7 +66,10 @@ func GetCar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c.TotalExpenses = totalExpenses(c.ID)
-	c.TotalCost = c.PurchasePrice + c.AuctionFees + c.TransportCost + c.TotalExpenses
+	if c.Status != "sold" {
+		c.OverheadShare = overheadSharePerActiveCar()
+	}
+	c.TotalCost = c.PurchasePrice + c.AuctionFees + c.TransportCost + c.TotalExpenses + c.OverheadShare
 	if c.SalePrice != nil {
 		p := *c.SalePrice - c.TotalCost
 		c.Profit = &p
@@ -128,6 +135,20 @@ func totalExpenses(carID int64) float64 {
 	var total float64
 	db.DB.QueryRow(`SELECT COALESCE(SUM(amount),0) FROM expenses WHERE car_id=$1`, carID).Scan(&total)
 	return total
+}
+
+// overheadSharePerActiveCar divides the total of account-level other expenses
+// (rent, consumables, etc.) equally across every car that has not been sold.
+// Sold cars carry no overhead, so the share redistributes as cars sell.
+func overheadSharePerActiveCar() float64 {
+	var total float64
+	db.DB.QueryRow(`SELECT COALESCE(SUM(amount),0) FROM other_expenses`).Scan(&total)
+	var activeCars int
+	db.DB.QueryRow(`SELECT COUNT(*) FROM cars WHERE status <> 'sold'`).Scan(&activeCars)
+	if activeCars == 0 {
+		return 0
+	}
+	return total / float64(activeCars)
 }
 
 func carPartners(carID int64) []models.CarPartner {
