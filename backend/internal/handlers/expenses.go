@@ -74,6 +74,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 		SoldCars       int     `json:"sold_cars"`
 		TotalInvested  float64 `json:"total_invested"`
 		TotalRepairs   float64 `json:"total_repairs"`
+		TotalOverhead  float64 `json:"total_overhead"`
 		TotalProfit    float64 `json:"total_profit"`
 		PendingRepairs float64 `json:"pending_repairs"`
 	}
@@ -83,11 +84,16 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	s.ActiveCars = s.TotalCars - s.SoldCars
 	db.DB.QueryRow(`SELECT COALESCE(SUM(purchase_price+auction_fees+transport_cost),0) FROM cars`).Scan(&s.TotalInvested)
 	db.DB.QueryRow(`SELECT COALESCE(SUM(amount),0) FROM expenses`).Scan(&s.TotalRepairs)
+	db.DB.QueryRow(`SELECT COALESCE(SUM(amount),0) FROM other_expenses`).Scan(&s.TotalOverhead)
+	var realizedProfit float64
 	db.DB.QueryRow(`
 		SELECT COALESCE(SUM(c.sale_price - (c.purchase_price+c.auction_fees+c.transport_cost+COALESCE(e.exp,0))),0)
 		FROM cars c
 		LEFT JOIN (SELECT car_id, SUM(amount) exp FROM expenses GROUP BY car_id) e ON e.car_id=c.id
-		WHERE c.status='sold' AND c.sale_price IS NOT NULL`).Scan(&s.TotalProfit)
+		WHERE c.status='sold' AND c.sale_price IS NOT NULL`).Scan(&realizedProfit)
+	// Overhead (rent, consumables, etc.) is a real business cost not tied to
+	// any sold car, so net profit shown here is realized profit less overhead.
+	s.TotalProfit = realizedProfit - s.TotalOverhead
 	db.DB.QueryRow(`
 		SELECT COALESCE(SUM(e.amount),0) FROM expenses e
 		JOIN cars c ON c.id=e.car_id WHERE c.status != 'sold'`).Scan(&s.PendingRepairs)

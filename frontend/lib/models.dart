@@ -363,6 +363,7 @@ class DashboardStats {
   final int soldCars;
   final double totalInvested;
   final double totalRepairs;
+  final double totalOverhead;
   final double totalProfit;
   final double pendingRepairs;
 
@@ -372,6 +373,7 @@ class DashboardStats {
     this.soldCars = 0,
     this.totalInvested = 0,
     this.totalRepairs = 0,
+    this.totalOverhead = 0,
     this.totalProfit = 0,
     this.pendingRepairs = 0,
   });
@@ -382,6 +384,7 @@ class DashboardStats {
         soldCars: j['sold_cars'] ?? 0,
         totalInvested: (j['total_invested'] ?? 0).toDouble(),
         totalRepairs: (j['total_repairs'] ?? 0).toDouble(),
+        totalOverhead: (j['total_overhead'] ?? 0).toDouble(),
         totalProfit: (j['total_profit'] ?? 0).toDouble(),
         pendingRepairs: (j['pending_repairs'] ?? 0).toDouble(),
       );
