@@ -53,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _StatCard('Total Invested', fmtMoney(s.totalInvested), Icons.attach_money, Colors.purple),
             _StatCard('Total Repairs', fmtMoney(s.totalRepairs), Icons.build_circle, Colors.red),
             _StatCard('Overhead', fmtMoney(s.totalOverhead), Icons.receipt_long, Colors.brown),
-            _StatCard('Net Profit', fmtMoney(s.totalProfit), Icons.trending_up,
+            _StatCard('Total Profit', fmtMoney(s.totalProfit), Icons.trending_up,
                 s.totalProfit >= 0 ? Colors.green : Colors.red),
           ]),
           const SizedBox(height: 32),
